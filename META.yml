@@ -1,0 +1,27 @@
+---
+abstract: 'print prereqs from META.json etc.'
+author:
+  - 'Maurice Mengel <mauricemengel@gmail.com>'
+build_requires: {}
+configure_requires:
+  ExtUtils::MakeMaker: 6.30
+dynamic_config: 0
+generated_by: 'Dist::Zilla version 4.300024, CPAN::Meta::Converter version 2.120921'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: prereqs
+requires:
+  CLI::Tiny: 0
+  CPAN::Meta: 0
+  Getopt::Long: 0
+  Moose: 0
+  perl: 5.006
+  strict: 0
+  warnings: 0
+resources:
+  bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=prereqs
+  homepage: https://github.com/mokko/p5-prereqs/wiki
+  repository: git://github.com/mokko/p5-prereqs.git
+version: 0.001

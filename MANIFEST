@@ -1,0 +1,12 @@
+LICENSE
+MANIFEST
+META.json
+META.yml
+Makefile.PL
+README
+bin/prereqs.pl
+lib/CPAN/Meta/Prereqs/Extract.pm
+t/META.json
+t/META.yml
+t/release-pod-syntax.t
+t/release-test-version.t

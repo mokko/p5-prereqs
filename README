@@ -1,0 +1,49 @@
+NAME
+    CPAN::Meta::Prereqs::Extract - print prereqs from META.json etc.
+
+VERSION
+    version 0.001
+
+SYNOPSIS
+            use CPAN::Meta::Prereqs:Extract;
+            my $tractor=new CPAN::Meta::Prereqs:Extract (file=>'META.json', verbose=>1);
+
+            $tractor->process(@filter);
+            if ( $opts{list} ) {
+                    $tractor->list;
+            exit 1;
+    }
+    $tractor->print_prereqs();
+
+METHODS
+  my $meta=$tractor->load_meta([$file]);
+    Either hand over $file via parameter or set it during new. Parameter
+    overwrites object.
+
+    Return value is a CPAN::Meta object.
+
+  $tractor->process (@filter);
+    Expects meta in $self->meta. Sets $self->prereqs and also returns them
+    as string hash.
+
+    If @filter contains phases, they are left out.
+
+    Warns when filters don't exist only in verbose mode.
+
+  $tractor->print_prereqs;
+    prints prereqs package names only to STDOUT
+
+  $tractor->list;
+    Prints prereqs from Meta file to STDOUT in a readable format
+
+    TODO: Should I warn when phase is develop?
+
+AUTHOR
+    Maurice Mengel <mauricemengel@gmail.com>
+
+COPYRIGHT AND LICENSE
+    This software is copyright (c) 2012 by Maurice Mengel.
+
+    This is free software; you can redistribute it and/or modify it under
+    the same terms as the Perl 5 programming language system itself.
+

@@ -5,21 +5,24 @@ use strict;
 use warnings;
 use CLI::Tiny qw (error say verbose);
 use Getopt::Long;
-use CPAN::Meta;
+use CPAN::Meta::Prereqs::Extract;
 
 my %opts;
 my @filter;
 GetOptions(
-	'list'    => \$opts{list},
-	'verbose' => \$CLI::Tiny::verbose,
+	'list'     => \$opts{list},
+	'verbose'  => \$CLI::Tiny::verbose,
 	'filter=s' => \@filter
 );
 
-my @def = qw (META.json META.yml);
-foreach my $default (@def) {
+foreach my $default (qw (META.json META.yml)) {
 	if ( -f $default ) {
 		$ARGV[0] ||= $default;
 	}
+}
+
+if ( !$ARGV[0] ) {
+	error "No Meta file found";
 }
 
 if ( !-f $ARGV[0] ) {
@@ -28,100 +31,29 @@ if ( !-f $ARGV[0] ) {
 
 verbose "About to load $ARGV[0]";
 
-my $meta;
-if ( $ARGV[0] =~ /\.yml$/ ) {
-	local $/;
-	open( my $fh, '<', $ARGV[0] ) or die "Can't open file $ARGV[0]";
-	$meta = CPAN::Meta->load_yaml_string(<$fh>);
-	close $fh
-
+my $tractor =
+  new CPAN::Meta::Prereqs::Extract( verbose => $CLI::Tiny::verbose );
+$tractor->load_meta( file => $ARGV[0] );
+$tractor->process(@filter);
+if ( $opts{list} ) {
+	$tractor->list;
+	exit 1;
 }
-else {
-	$meta = CPAN::Meta->load_file( $ARGV[0] );
-}
+$tractor->print_prereqs();
 
-my $prereqs=process($meta, @filter) or die "Can't process meta";
-list($prereqs) if ( $opts{list} );
-print_prereqs($prereqs);
 exit 1;
 
 
-#
-## SUBS
-#
+__END__
+=pod
 
+=head1 NAME
 
-=func my $prereqs=process ($meta, @filter);
+prereqs.pl - print prereqs from META.json etc.
 
-Returns prereqs as string hash. If @filter contains phases, they are left out.
+=head1 VERSION
 
-Warns when filters don't exist only in verbose mode.
-
-=cut
-
-sub process {
-	my $meta = shift || return;
-	
-	$prereqs = $meta->effective_prereqs->as_string_hash;
-
-	foreach my $filter (@_) {
-		if ($prereqs->{$filter}) {
-			delete $prereqs->{$filter};
-		} else {
-			verbose "Filter '$filter' doesn't exist";
-		}
-	}
-
-	return $prereqs;
-}
-
-=func print_prereqs ($prereqs);
-
-prints prereqs package names only to STDOUT 
-
-=cut
-
-sub print_prereqs {
-	my $prereqs = shift || return;
-
-	foreach my $phase ( keys %{$prereqs} ) {
-		foreach my $rel ( keys %{ $meta->{prereqs}{$phase} } ) {
-			next if $rel eq 'conflicts';
-			foreach my $mod ( keys %{ $meta->{prereqs}{$phase}{$rel} } ) {
-				print "$mod ";
-			}
-		}
-	}
-	print "\n";
-
-}
-
-=func list ($processed)
-
-Prints prereqs from Meta file to STDOUT in a readable format 
-
-TODO: Should I warn when phase is develop?
-
-=cut
-
-
-sub list {
-	my $prereqs = shift || return;
-
-	foreach my $phase ( keys %{$prereqs} ) {
-		my $indent = ' ';
-		say "$phase";
-		foreach my $rel ( keys %{ $meta->{prereqs}{$phase} } ) {
-			say "$indent$rel";
-			foreach my $mod ( keys %{ $meta->{prereqs}{$phase}{$rel} } ) {
-				say "$indent$indent$mod "
-				  . $meta->{prereqs}{$phase}{$rel}{$mod};
-			}
-		}
-
-	}
-	exit 0;
-}
+version 0.001
 
 =head1 SYNOPSIS
 
@@ -150,4 +82,16 @@ L<CPAN::Meta>, L<App::cpanminus>
 * should I allow an option to print only those modules which are not 
   installed? Doesn't seem essential.
 
+=head1 AUTHOR
+
+Maurice Mengel <mauricemengel@gmail.com>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2012 by Maurice Mengel.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
 =cut
+

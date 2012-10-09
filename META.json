@@ -1,0 +1,48 @@
+{
+   "abstract" : "print prereqs from META.json etc.",
+   "author" : [
+      "Maurice Mengel <mauricemengel@gmail.com>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Dist::Zilla version 4.300024, CPAN::Meta::Converter version 2.120921",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "prereqs",
+   "prereqs" : {
+      "configure" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "6.30"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "CLI::Tiny" : "0",
+            "CPAN::Meta" : "0",
+            "Getopt::Long" : "0",
+            "Moose" : "0",
+            "perl" : "5.006",
+            "strict" : "0",
+            "warnings" : "0"
+         }
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://rt.cpan.org/Public/Dist/Display.html?Name=prereqs"
+      },
+      "homepage" : "https://github.com/mokko/p5-prereqs/wiki",
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/mokko/p5-prereqs.git",
+         "web" : "https://github.com/mokko/p5-prereqs"
+      }
+   },
+   "version" : "0.001"
+}
+
