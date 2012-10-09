@@ -1,18 +1,18 @@
 #!/usr/bin/perl
+# PODNAME: prereqs.pl
 # ABSTRACT: print prereqs from META.json etc.
 use strict;
 use warnings;
 use CLI::Tiny qw (error say verbose);
 use Getopt::Long;
-#use Module::Loader;    #what happened to this module? It's no longer on cpan...
 use CPAN::Meta;
 
-our @yaml_phases = qw (build_requires configure_requires requires recommends);
-
 my %opts;
+my @filter;
 GetOptions(
 	'list'    => \$opts{list},
-	'verbose' => \$opts{verbose},
+	'verbose' => \$CLI::Tiny::verbose,
+	'filter=s' => \@filter
 );
 
 my @def = qw (META.json META.yml);
@@ -25,52 +25,66 @@ foreach my $default (@def) {
 if ( !-f $ARGV[0] ) {
 	error "File not found: $ARGV[0]";
 }
-if ( $opts{verbose} ) { CLI::Tiny::verbose_on; }
+
 verbose "About to load $ARGV[0]";
 
-my $meta = CPAN::Meta->load_file($ARGV[0]);
-
-
-#for my $module ($prereqs->required_modules) {
-#    my $version = get_local_version($module);
-#
-#    die "missing required module $module" unless defined $version;
-#    die "version for $module not in range"
-#      unless $prereqs->accepts_module($module, $version);
-#  }
-
 my $meta;
-if ( $ARGV[0] =~ /\.json$/ ) {
-	load_module 'JSON';
+if ( $ARGV[0] =~ /\.yml$/ ) {
 	local $/;
 	open( my $fh, '<', $ARGV[0] ) or die "Can't open file $ARGV[0]";
+	$meta = CPAN::Meta->load_yaml_string(<$fh>);
+	close $fh
 
-	$meta = eval { decode_json(<$fh>); };
-	close $fh;
-	die $@ if $@;
-	list_json($meta) if ( $opts{list} );
-	print_json($meta);
-}
-elsif ( $ARGV[0] =~ /\.yml$/ ) {
-	load_module 'YAML::Any' => qw/LoadFile/;
-	$meta = LoadFile( $ARGV[0] );
-
-	#say Dumper $meta;
-	list_yaml($meta) if ( $opts{list} );
-	print_yaml($meta);
 }
 else {
-	error "Unrecognized file format $ARGV[0]";
+	$meta = CPAN::Meta->load_file( $ARGV[0] );
 }
+
+my $prereqs=process($meta, @filter) or die "Can't process meta";
+list($prereqs) if ( $opts{list} );
+print_prereqs($prereqs);
+exit 1;
+
 
 #
 ## SUBS
 #
 
-#should I warn when phase is develop?
-sub print_json {
-	my $meta = shift || die "Internal error: Need list!";
-	foreach my $phase ( keys %{ $meta->{prereqs} } ) {
+
+=func my $prereqs=process ($meta, @filter);
+
+Returns prereqs as string hash. If @filter contains phases, they are left out.
+
+Warns when filters don't exist only in verbose mode.
+
+=cut
+
+sub process {
+	my $meta = shift || return;
+	
+	$prereqs = $meta->effective_prereqs->as_string_hash;
+
+	foreach my $filter (@_) {
+		if ($prereqs->{$filter}) {
+			delete $prereqs->{$filter};
+		} else {
+			verbose "Filter '$filter' doesn't exist";
+		}
+	}
+
+	return $prereqs;
+}
+
+=func print_prereqs ($prereqs);
+
+prints prereqs package names only to STDOUT 
+
+=cut
+
+sub print_prereqs {
+	my $prereqs = shift || return;
+
+	foreach my $phase ( keys %{$prereqs} ) {
 		foreach my $rel ( keys %{ $meta->{prereqs}{$phase} } ) {
 			next if $rel eq 'conflicts';
 			foreach my $mod ( keys %{ $meta->{prereqs}{$phase}{$rel} } ) {
@@ -79,21 +93,22 @@ sub print_json {
 		}
 	}
 	print "\n";
+
 }
 
-sub print_yaml {
-	my $meta = shift || die "Internal error: Need list!";
-	foreach my $phase (@yaml_phases) {
-		foreach my $mod ( keys %{ $meta->{$phase} } ) {
-			print "$mod ";
-		}
-	}
-	print "\n";
-}
+=func list ($processed)
 
-sub list_json {
-	my $meta = shift || die "Internal error: Need list!";
-	foreach my $phase ( keys %{ $meta->{prereqs} } ) {
+Prints prereqs from Meta file to STDOUT in a readable format 
+
+TODO: Should I warn when phase is develop?
+
+=cut
+
+
+sub list {
+	my $prereqs = shift || return;
+
+	foreach my $phase ( keys %{$prereqs} ) {
 		my $indent = ' ';
 		say "$phase";
 		foreach my $rel ( keys %{ $meta->{prereqs}{$phase} } ) {
@@ -103,28 +118,16 @@ sub list_json {
 				  . $meta->{prereqs}{$phase}{$rel}{$mod};
 			}
 		}
+
 	}
 	exit 0;
 }
-
-sub list_yaml {
-	my $meta = shift || die "Internal error: Need list!";
-	foreach my $phase (@yaml_phases) {
-		my $indent = ' ';
-		say "$phase";
-		foreach my $mod ( keys %{ $meta->{$phase} } ) {
-			say "$indent$mod " . $meta->{$phase}{$mod};
-		}
-	}
-
-	exit 0;
-}
-
 
 =head1 SYNOPSIS
 
 	prereqs.pl | cpanm
 	prereqs.pl somefile.yml | cpanm
+	prereqs.pl --list
 
 =head1 DESCRIPTION
 
@@ -134,14 +137,17 @@ Print the requires from yaml or json file.
 
 --list list phases, relationships and version numbers
 
+--verbose be more verbose
+
 =head1 SEE ALSO
 
 L<CPAN::Meta>, L<App::cpanminus>
 
 =head1 TODO
 
-allow picking phases and modes
-deal with version numbers
-write tests
+* write tests
+
+* should I allow an option to print only those modules which are not 
+  installed? Doesn't seem essential.
 
 =cut
