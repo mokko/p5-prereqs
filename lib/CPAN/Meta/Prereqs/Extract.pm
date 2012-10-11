@@ -1,6 +1,6 @@
 package CPAN::Meta::Prereqs::Extract;
 {
-  $CPAN::Meta::Prereqs::Extract::VERSION = '0.001';
+  $CPAN::Meta::Prereqs::Extract::VERSION = '0.002';
 }
 
 #ABSTRACT: print prereqs from META.json etc.
@@ -12,7 +12,7 @@ use CLI::Tiny qw (error say);
 use Moose;    #overkill
 
 has 'verbose'  => ( is => 'ro', isa => 'Int' );
-has 'file'     => ( is => 'ro', isa => 'Str' );
+has 'file'     => ( is => 'rw', isa => 'Str' );
 has 'cpanmeta' => ( is => 'rw', isa => 'Object' );
 has 'prereqs'  => ( is => 'rw', isa => 'HashRef' );
 has 'filter'   => ( is => 'rw', isa => 'Array' );
@@ -34,20 +34,19 @@ sub BUILD {
 
 sub load_meta {
 	my $self = shift;
-	my $file = shift|| $self->file;
+	my %args = @_;
+	my $file=$args{file}|| $self->file; # arg overrides $self if both are given.
 
-	if (!$file) {
-		return;
-	}
+	return if (!$file);
 
 	if ( $file =~ /\.yml$/ ) {
 		local $/;
-		open( my $fh, '<', $self->file ) or die "Can't open file $self->{file}";
+		open( my $fh, '<', $file ) or die "Can't open file $file";
 		$self->cpanmeta( CPAN::Meta->load_yaml_string(<$fh>) );
 		close $fh;
 	}
 	else {
-		$self->cpanmeta( CPAN::Meta->load_file( $self->file ) );
+		$self->cpanmeta( CPAN::Meta->load_file( $file ) );
 	}
 
 	return $self->cpanmeta;
@@ -128,7 +127,7 @@ CPAN::Meta::Prereqs::Extract - print prereqs from META.json etc.
 
 =head1 VERSION
 
-version 0.001
+version 0.002
 
 =head1 SYNOPSIS
 

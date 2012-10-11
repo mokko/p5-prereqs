@@ -24,4 +24,4 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=prereqs
   homepage: https://github.com/mokko/p5-prereqs/wiki
   repository: git://github.com/mokko/p5-prereqs.git
-version: 0.001
+version: 0.002
