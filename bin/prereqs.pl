@@ -33,7 +33,7 @@ verbose "About to load $ARGV[0]";
 
 my $tractor =
   new CPAN::Meta::Prereqs::Extract( verbose => $CLI::Tiny::verbose );
-$tractor->load_meta( file => $ARGV[0] );
+$tractor->load_meta( file => $ARGV[0] ) or die "Can't load file $ARGV[0]";
 $tractor->process(@filter);
 if ( $opts{list} ) {
 	$tractor->list;
