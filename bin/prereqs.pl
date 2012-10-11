@@ -37,11 +37,11 @@ $tractor->load_meta( file => $ARGV[0] ) or die "Can't load file $ARGV[0]";
 $tractor->process(@filter);
 if ( $opts{list} ) {
 	$tractor->list;
-	exit 1;
+	exit 0; #shell success
 }
 $tractor->print_prereqs();
 
-exit 1;
+exit 0; #shell success
 
 =head1 SYNOPSIS
 

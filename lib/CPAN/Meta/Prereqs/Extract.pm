@@ -33,13 +33,12 @@ $tractor->print_prereqs();
 ## SUBS
 #
 
-
 sub BUILD {
-	my $self=shift;
-	if ($self->file) {
+	my $self = shift;
+	if ( $self->file ) {
 		$self->load_meta;
 	}
-	
+
 }
 
 =method my $meta=$tractor->load_meta([$file]);
@@ -54,9 +53,10 @@ Return value is a CPAN::Meta object.
 sub load_meta {
 	my $self = shift;
 	my %args = @_;
-	my $file=$args{file}|| $self->file; # arg overrides $self if both are given.
+	my $file = $args{file}
+	  || $self->file;    # arg overrides $self if both are given.
 
-	return if (!$file);
+	return if ( !$file );
 
 	if ( $file =~ /\.yml$/ ) {
 		local $/;
@@ -65,7 +65,7 @@ sub load_meta {
 		close $fh;
 	}
 	else {
-		$self->cpanmeta( CPAN::Meta->load_file( $file ) );
+		$self->cpanmeta( CPAN::Meta->load_file($file) );
 	}
 
 	return $self->cpanmeta;
@@ -83,20 +83,31 @@ Warns when filters don't exist only in verbose mode.
 
 sub process {
 	my $self = shift;
-	my @filter=$self->filter||@_;
+	my @filter = $self->filter || @_;
 
 	if ( !$self->cpanmeta ) {
 		die "Some error";
 	}
 
 	$self->{prereqs} = $self->cpanmeta->effective_prereqs->as_string_hash;
+	my @phases = keys %{ $self->prereqs };
 
 	foreach my $filter (@filter) {
-		if ( $self->{prereqs}->{$filter} ) {
-			delete $self->{prereqs}->{$filter};
+		if ( $self->prereqs->{$filter} ) {
+			delete $self->prereqs->{$filter};
+			print "'$filter' filtered\n" if $self->verbose;
+		}
+		elsif ( grep $self->prereqs->{$_}{$filter}, @phases ) {
+			print "'$filter' filtered\n" if $self->verbose;
+			foreach my $phase (@phases) {
+				if ( $self->prereqs->{$phase}{$filter} ) {
+					delete $self->prereqs->{$phase}{$filter};
+				}
+			}
 		}
 		else {
-			print "Filter '$filter' doesn't exist" if $self->verbose;
+			print "Filter '$filter' doesn't exist\n"
+			  if $self->verbose;
 		}
 	}
 
